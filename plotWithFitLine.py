@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pylab as pl
 import numpy as np
+import os
 
 def printListOfHeaders(pathToCsv):
     df = pd.read_csv(pathToCsv)
@@ -9,7 +10,11 @@ def printListOfHeaders(pathToCsv):
 
 
 
-def scatPlot(xAxis,yAxis, pathToCsv, fitline=True, flOrder = 1, xLabel=True, yLabel=True):
+def scatPlot(xAxis,yAxis, pathToCsv, fitline=True, flOrder = 1, xLabel=True, yLabel=True, scale = 7, ratio = 1, fontSize = 20, saveFile = False, dirName = os.getcwd()):
+
+    fig = plt.figure(figsize=(scale, ratio * scale))
+    ax = fig.add_subplot(111)
+
     df = pd.read_csv(pathToCsv)
     headerLabels = df.columns.values    
     try:
@@ -21,9 +26,7 @@ def scatPlot(xAxis,yAxis, pathToCsv, fitline=True, flOrder = 1, xLabel=True, yLa
     except KeyError:
         print('\nError: No column named ' + yAxis + ' is avalable' '\nAvalable columns are:\n' + '%s' % '\n'.join(map(str, headerLabels)) + '\n')
 
-    plt.scatter(xVals, yVals,  color='blue')
-    print(type(xVals))
-
+    ax.scatter(xVals, yVals,  color='blue')
 
     if fitline:
         xValsSorted = np.sort(xVals)
@@ -35,35 +38,46 @@ def scatPlot(xAxis,yAxis, pathToCsv, fitline=True, flOrder = 1, xLabel=True, yLa
             ## calculate the r-squrared value ##
             sumListy = np.sum(yVals)
             ybar = np.mean(yVals)
-            lxly = np.dot(xVals,yVals)
-            lyly = np.dot(yVals,yVals)
+            lxly = np.dot(xVals, yVals)
+            lyly = np.dot(yVals, yVals)
             ssR = lyly - coefs[1] * sumListy - coefs[0] * lxly
             ssT = lyly - sumListy * ybar
             rSqrd = 1-ssR/ssT
 
-            plt.plot(xValsSorted, lin(xValsSorted), '-r')
+            ax.plot(xValsSorted, lin(xValsSorted), '-r')
+
+            fitEqn = str(lin)[2:]
+            props = dict(facecolor = 'white', alpha = 0.6, pad = 8) 
+            ax.text(243,53,'$y=$' + fitEqn + '\n$R^2={r:.3f}$'.format(*coefs,r=rSqrd), color='black', fontsize = fontSize, bbox = props)
 
         else:
             coefs = np.polyfit(xVals, yVals, flOrder)
             lin = np.poly1d(coefs)
-            plt.plot(xValsSorted, lin(xValsSorted), '-g')  
+            ax.plot(xValsSorted, lin(xValsSorted), '-g')
+ 
 
     if xLabel==True:
-        plt.xlabel(str(xAxis))
+        ax.set_xlabel(str(xAxis).replace("_"," ").title(), fontsize = fontSize)
     elif xLabel==False:
-        plt.xlabel(None)
+        ax.set_xlabel(None)
     else:
-        plt.xlabel(str(xLabel).title())
+        ax.set_xlabel(str(xLabel).title(),fontsize = fontSize)
 
     if yLabel==True:
-        plt.ylabel(str(yAxis))
+        ax.set_ylabel(str(yAxis).replace("_"," ").title(), fontsize=fontSize)
     elif yLabel==False:
-        plt.ylabel(None)
+        ax.set_ylabel(None)
     else:
-        plt.ylabel(str(yLabel).title())
+        ax.set_ylabel(str(yLabel).title(), fontsize=fontSize)
+
+    ax.tick_params(axis='both', labelsize=fontSize)
+
+    if saveFile:
+        plt.savefig(os.path.join(dirName, '{}_vs_{}_fitOrder{}.png'.format(yAxis,xAxis,flOrder)), bbox_inches='tight')
 
     plt.show()
 
-printListOfHeaders('example.csv')
-scatPlot('CO2EMISSIONS','FUELCONSUMPTION_COMB_MPG','example.csv', flOrder = 4)
+
+
+scatPlot('CO2EMISSIONS','FUELCONSUMPTION_COMB_MPG','example.csv', flOrder = 1, saveFile = True)
 
