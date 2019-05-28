@@ -1,11 +1,13 @@
-# Plot data from csv flile with fitline	
-function for plotting data from a csv file using pandas.
+# Regression models for machine learning	
+A set of functions for doing machine learning regression using sklearn, numpy, and pandas packages
 
 ## Instructions
-* Function will create a simple scatter plot with an optional fitline.
+* Functions can be used to conduct regression analysis and return fitting parameters as well as creating plots.
 
 
 ## To Do
-* Add legend with r-squared value and fitting equation.
+* Continue to improve functionality for non-linear models.
+* Build up functions to include more sophisticated machine learning algorithms.
+* continue to improve documentation.
 
 

@@ -9,6 +9,8 @@ from plotWithFitLine import printListOfHeaders
 from plotWithFitLine import scatPlot
 from plotWithFitLine import plotMLregression
 from plotWithFitLine import histPlots
+from plotWithFitLine import mlLinRegressParams
+
 #%matplotlib inline
 
 ## Reading in the data and creating a dataframe using pandas ##
@@ -36,3 +38,12 @@ plotMLregression('ENGINESIZE','CO2EMISSIONS',"example.csv",saveFile=True)
 
 ## Plot of Linear regression using numpy values ##
 scatPlot('ENGINESIZE','CO2EMISSIONS',"example.csv",saveFile=True)
+
+## Calculate the  ##
+xVals = ['ENGINESIZE','CYLINDERS','FUELCONSUMPTION_COMB']
+yVals = ['CO2EMISSIONS']
+regParams = mlLinRegressParams(xVals, yVals, "example.csv", trainDataRatio = 0.8)
+print ('\nmultiple linear regression')
+print ('Coefficients: ', regParams[0])
+print("Residual sum of squares: %.2f" % regParams[1])
+print('Variance score: %.2f' % regParams[2])

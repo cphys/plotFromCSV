@@ -88,8 +88,93 @@ def scatPlot(xAxis,yAxis, pathToCsv, fitline=True, flOrder = 1, xLabel=True, yLa
     plt.show()
 
 
+def mlLinRegressParams(xParams,yParams,pathToCsv, trainDataRatio = 0.8):
+    """
+    Function which uses sklearn machine learning package to perform a multiple linear
+    on a csv file imported using pandas.
 
-def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location=2, scale = 5, ratio = .75, fitline = True, flOrder = 1, xLabel=True, yLabel=True, fontSize = 10, saveFile = False, dirName = os.getcwd()):
+    Parameters:
+    -----------
+    xParams :        array like list of independent x parameters given as the names
+                     of the column headers in the csv file.
+    yParams :        array like list of dependent y parameters given as the names
+                     of the column headers in the csv file.
+    pathToCsv :      path to given csv file
+    trainDataRatio : ratio of the % of data used for training to the % used for testing
+                     of the machine learning data
+
+    Returns:
+    --------
+    An arraylike object consisting of the expansion coefficients, the residual sum of squares
+    and the variance score.
+    """
+
+    df = pd.read_csv(pathToCsv)
+    for xParam in xParams:
+        try:
+            xVals = df[xParam]
+        except KeyError:
+            print('\nError: No column named ' + xParam + ' is avalable' '\nAvalable columns are:\n' + '%s' % '\n'.join(map(str, headerLabels)) + '\n')
+
+    for yParam in yParams:
+        try:
+            yVals = df[yParam]
+        except KeyError:
+            print('\nError: No column named ' + yParam + ' is avalable' '\nAvalable columns are:\n' + '%s' % '\n'.join(map(str, headerLabels)) + '\n')
+
+    ## Select only the parameters that we want to look at in the dataframe ##
+    cdf = df[xParams+ yParams]
+    ## Here we decide that the train data is 80% of the data and the test is 20% ##
+    msk = np.random.rand(len(df)) < trainDataRatio
+    train = cdf[msk]
+    test = cdf[~msk]
+
+    ## Print the expansion coefficients of the training data ##
+    regr = linear_model.LinearRegression()
+    x = np.asanyarray(train[xParams])
+    y = np.asanyarray(train[yParams])
+    regr.fit (x, y)
+    regCoeffs = np.asanyarray(regr.coef_[0])
+
+    ## Now test the regression model against the test data and analyze the error ##
+    y_hat= regr.predict(test[xParams])
+    x = np.asanyarray(test[xParams])
+    y = np.asanyarray(test[yParams])
+    resSumofSq =  np.mean((y_hat - y) ** 2)
+
+    # Explained variance score: 1 is perfect prediction
+    varScore = regr.score(x, y)
+
+    return np.asanyarray([regCoeffs, resSumofSq, varScore])
+
+
+
+def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location=2, scale = 5, ratio = .75, fitline = True, flOrder = 1, xLabel=True, yLabel=True, fontSize = 10, saveFile = False, dirName = os.getcwd(), trainDataRatio = 0.8):
+
+    """
+    Function which uses sklearn machine learning package to perform a linear regression
+    on a csv file imported using pandas.
+
+    Parameters:
+    -----------
+    xAxis :        (str) associated with the name of the column from the csv file to appear
+                   on the x axis of the plot
+    yAxis :        (str) associated with the name of the column from the csv file to appear
+                   on the x axis of the plot
+    pathToCsv :    (str) path to given csv file
+    colors :       (str,str) tuple of len 2 with the first entry representing the color of the
+                   training data and the second color the testing data
+    location :     (int) gives the location of the plot legend
+    dirName :      (str) name of the directory to which the file should be saved
+    trainDataRatio : ratio of the % of data used for training to the % used for testing
+                     of the machine learning data
+
+    Returns:
+    --------
+    A plot of the data with the training data and the test data labeled by color and a best fit line
+    for the linear regression of the training data.
+    """
+
     fig = plt.figure(figsize=(scale, ratio * scale))
     ax = fig.add_subplot(111)
     df = pd.read_csv(pathToCsv)
@@ -110,7 +195,7 @@ def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location
     pL = [xAxis,yAxis]
     cdf = df[[xAxis,yAxis]]
 
-    msk = np.random.rand(len(df)) < 0.8
+    msk = np.random.rand(len(df)) < trainDataRatio
     train = cdf[msk]
     test = cdf[~msk]
 
@@ -129,18 +214,20 @@ def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location
         xValsSorted = np.sort(xVals)
         intOrder = int(flOrder)
         if intOrder == 1:
+            ## Print the expansion coefficients of the training data ##
             regr = linear_model.LinearRegression()
             train_x = np.asanyarray(train[[xAxis]])
             train_y = np.asanyarray(train[[yAxis]])
             regr.fit (train_x, train_y)
+            # Print the coefficients from the expansion
+            print ('\nCoefficients: ', regr.coef_)
+            print ('Intercept: ',regr.intercept_)
 
+            ## Now test the regression model against the test data and analyze the error ##
             test_x = np.asanyarray(test[[xAxis]])
             test_y = np.asanyarray(test[[yAxis]])
             test_y_ = regr.predict(test_x)
 
-            # Print the coefficients from the expansion
-            print ('\nCoefficients: ', regr.coef_)
-            print ('Intercept: ',regr.intercept_)
             # print various error metrics to mesasure the accuracy of our linear model
             print("Mean absolute error: %.2f" % np.mean(np.absolute(test_y_ - test_y)))
             print("Residual sum of squares (MSE): %.2f" % np.mean((test_y_ - test_y) ** 2))
@@ -170,6 +257,10 @@ def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location
         plt.savefig(os.path.join(dirName, 'mL_{}_vs_{}_fitOrder{}.png'.format(yAxis,xAxis,flOrder)), bbox_inches='tight')
         
     plt.show()
+
+
+
+
 
 def histPlots(paramList,pathToCsv):
     df = pd.read_csv(pathToCsv)
