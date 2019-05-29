@@ -10,7 +10,7 @@ from plotWithFitLine import scatPlot
 from plotWithFitLine import plotMLregression
 from plotWithFitLine import histPlots
 from plotWithFitLine import mlLinRegressParams
-
+from plotWithFitLine import nonLinMLregression
 #%matplotlib inline
 
 ## Reading in the data and creating a dataframe using pandas ##
@@ -47,3 +47,11 @@ print ('\nmultiple linear regression')
 print ('Coefficients: ', regParams[0])
 print("Residual sum of squares: %.2f" % regParams[1])
 print('Variance score: %.2f' % regParams[2])
+
+## Plot chineese GDP data and fit a line ##
+def sigmoid(x,  beta_1 , beta_2):
+     y = 1 / (1 + np.exp(-beta_1*(x-beta_2)))
+     return y
+
+nonLinMLregression('Year', 'Value', 'chinaData.csv',sigmoid, xLabel = 'Year', yLabel = 'GDP')
+

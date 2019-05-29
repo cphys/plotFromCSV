@@ -5,7 +5,8 @@ import numpy as np
 import os
 from sklearn import linear_model
 from sklearn.metrics import r2_score
-from matplotlib.offsetbox import AnchoredText
+from scipy.optimize import curve_fit
+
 
 
 def printListOfHeaders(pathToCsv):
@@ -258,7 +259,92 @@ def plotMLregression(xAxis, yAxis, pathToCsv, colors = ("blue", "red"), location
         
     plt.show()
 
+def nonLinMLregression(xAxis, yAxis, pathToCsv, fitFunction, colors = ("blue", "red"), location=2, scale = 5, ratio = .75, fitline = True, flOrder = 1, xLabel=True, yLabel=True, fontSize = 10, saveFile = False, dirName = os.getcwd(), trainDataRatio = 0.8, plLegend = True, pltFunction = None, testFit=True):
 
+    fig = plt.figure(figsize=(scale, ratio * scale))
+    ax = fig.add_subplot(111)
+    df = pd.read_csv(pathToCsv)
+    try:
+        xVals = df[xAxis]
+    except KeyError:
+        print('\nError: No column named ' + xAxis + ' is avalable' '\nAvalable columns are:\n' + '%s' % '\n'.join(map(str, headerLabels)) + '\n')
+    try:
+        yVals = df[yAxis]
+    except KeyError:
+        print('\nError: No column named ' + yAxis + ' is avalable' '\nAvalable columns are:\n' + '%s' % '\n'.join(map(str, headerLabels)) + '\n')
+
+    if testFit:
+
+        #logistic function
+        x_data, y_data = (df[xAxis].values, df[yAxis].values)
+        # Y_pred = fitFunction(x_data, beta_1 , beta_2)
+        cdf = df[[xAxis,yAxis]]
+
+        ## Normalize the Data ##
+        maxXval = max(x_data)
+        maxYval = max(y_data)
+        xdata = x_data/maxXval
+        ydata = y_data/maxYval
+
+        ## Calculate the accuracy of the given model ##
+        # split data into train/test
+
+        msk = np.random.rand(len(df)) < trainDataRatio
+        train = cdf[msk]
+        test = cdf[~msk]
+
+        pl1 = (train[xAxis], train[yAxis])
+        pl2 =  (test[xAxis], test[yAxis])
+
+        data = (pl1,pl2)    
+        groups = ("Test Data", "Training Data")
+
+        for data, color, group in zip(data, colors, groups):
+            x, y = data
+            if plLegend:
+                ax.scatter(x,y, alpha=0.7, c=color, edgecolors='none', s=30, label = group)
+                
+            else:
+                ax.scatter(x,y, alpha=0.7, c=color, edgecolors='none', s=30, label = None)
+
+        ## use scipy to optimize the fitting parameters ##
+        popt, pcov = curve_fit(fitFunction, xdata, ydata)
+        #print the final parameters
+        print(" beta_1 = %f, beta_2 = %f" % (popt[0], popt[1]))
+        x = np.linspace(1960, 2015, 55)
+        y = fitFunction(x/maxXval, *popt)
+        ax.plot(x , y*maxYval , linewidth=3.0, label='fit')
+        ax.legend(loc='best')
+   
+        # predict using test set
+        y_hat = fitFunction(test[xAxis]/maxXval, *popt)
+
+        # evaluation
+        print("Mean absolute error: %.2f" % np.mean(np.absolute(y_hat - test[yAxis]/maxYval)))
+        print("Residual sum of squares (MSE): %.2f" % np.mean((y_hat - test[yAxis]/maxYval) ** 2))
+        print("R2-score: %.2f" % r2_score(y_hat , test[yAxis]/maxYval) )
+
+ 
+    if xLabel==True:
+        ax.set_xlabel(str(xAxis).replace("_"," ").title(), fontsize = fontSize)
+    elif xLabel==False:
+        ax.set_xlabel(None)
+    else:
+        ax.set_xlabel(str(xLabel),fontsize = fontSize)
+
+    if yLabel==True:
+        ax.set_ylabel(str(yAxis).replace("_"," ").title(), fontsize=fontSize)
+    elif yLabel==False:
+        ax.set_ylabel(None)
+    else:
+        ax.set_ylabel(str(yLabel), fontsize=fontSize)
+
+    ax.tick_params(axis='both', labelsize=fontSize)
+
+    if saveFile:
+        plt.savefig(os.path.join(dirName, 'mL_{}_vs_{}_fitOrder{}.png'.format(yAxis,xAxis,flOrder)), bbox_inches='tight')
+        
+    plt.show()
 
 
 

@@ -6,7 +6,7 @@ A set of functions for doing machine learning regression using sklearn, numpy, a
 
 
 ## To Do
-* Continue to improve functionality for non-linear models.
+* combine nonlinear ml with linear ml check that non-linear works will other functions.
 * Build up functions to include more sophisticated machine learning algorithms.
 * continue to improve documentation.
 
